@@ -23,10 +23,17 @@ export default function App() {
   const [badgeText, setBadgeText] = useState(0);
 
   const [stories, setStories] = useState<Story[]>([]);
-  const [posts, setPosts] = useState<Post[]>([]);
-
   const [isFetchingStories, setIsFetchingStories] = useState(true);
+  const [storiesCurrentPage, setStoriesCurrentPage] = useState(1);
+  const [storiesRenderedData, setRenderedStories] = useState<Story[]>([]);
+
+  const [posts, setPosts] = useState<Post[]>([]);
   const [isFetchingPosts, setIsFetchingPosts] = useState(true);
+  const [postsCurrentPage, setPostsCurrentPage] = useState(1);
+  const [postsRenderedData, setRenderedPosts] = useState<Post[]>([]);
+
+  const pageSize = 6;
+  const [isLoadingMoreItems, setIsLoadingMoreItems] = useState(false);
 
   function handleActivateBadge() {
     setActivateBadge(true);
@@ -42,11 +49,32 @@ export default function App() {
     try {
       const fetchedStories = await fetchStories();
       setStories(fetchedStories);
+      const paginatedStories = pagination(
+        fetchedStories,
+        1,
+        pageSize,
+      ) as Story[];
+      setRenderedStories(paginatedStories);
     } catch (error) {
       console.log("error while fetching stories: ", error);
     } finally {
       setIsFetchingStories(false);
     }
+  }
+
+  function handleStoriesInfiniteScroll() {
+    if (isLoadingMoreItems) return;
+    setIsLoadingMoreItems(true);
+    const contentToAppend = pagination(
+      stories,
+      storiesCurrentPage + 1,
+      pageSize,
+    ) as Story[];
+    if (contentToAppend.length > 0) {
+      setStoriesCurrentPage(storiesCurrentPage + 1);
+      setRenderedStories((prev) => [...prev, ...contentToAppend]);
+    }
+    setIsLoadingMoreItems(false);
   }
 
   async function populatePosts() {
@@ -58,6 +86,19 @@ export default function App() {
     } finally {
       setIsFetchingPosts(false);
     }
+  }
+
+  function pagination(
+    database: Story[] | Post[],
+    currentPage: number,
+    pageSize: number,
+  ) {
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    if (startIndex >= database.length) {
+      return [];
+    }
+    return database.slice(startIndex, endIndex);
   }
 
   useEffect(() => {
@@ -82,10 +123,12 @@ export default function App() {
             <ActivityIndicator size={"large"} color={"#F35BAC"} />
           ) : stories.length > 0 ? (
             <FlatList
+              onEndReachedThreshold={0.5}
+              onEndReached={handleStoriesInfiniteScroll}
               horizontal={true}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.storiesFlatList}
-              data={stories}
+              data={storiesRenderedData}
               keyExtractor={(item) => item.id.toString()}
               renderItem={(item) => (
                 <StoryItem
