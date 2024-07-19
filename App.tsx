@@ -15,30 +15,27 @@ import {fetchPosts, Post} from "./utils/posts";
 
 import {Title} from "./components/Title/Title";
 import {Button} from "./components/Button/Button";
+import {NoItemsMessage} from "./components/NoItemsMessage/NoItemsMessage";
 import {StoryItem} from "./components/StoryItem/StoryItem";
-import {NoStoryGotten} from "./components/NoStoryGotten/NoStoryGotten";
+import {PostItem} from "./components/PostItem/PostItem";
 
 export default function App() {
-  const [activateBadge, setActivateBadge] = useState(false);
-  const [badgeText, setBadgeText] = useState(0);
+  const [activateBadge, setActivateBadge] = useState(true);
+  const [badgeText, setBadgeText] = useState(2);
 
+  const storiesPageSize = 6;
   const [stories, setStories] = useState<Story[]>([]);
   const [isFetchingStories, setIsFetchingStories] = useState(true);
+  const [isLoadingMoreStories, setIsLoadingMoreStories] = useState(false);
   const [storiesCurrentPage, setStoriesCurrentPage] = useState(1);
   const [storiesRenderedData, setRenderedStories] = useState<Story[]>([]);
 
+  const postsPageSize = 3;
   const [posts, setPosts] = useState<Post[]>([]);
   const [isFetchingPosts, setIsFetchingPosts] = useState(true);
+  const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false);
   const [postsCurrentPage, setPostsCurrentPage] = useState(1);
   const [postsRenderedData, setRenderedPosts] = useState<Post[]>([]);
-
-  const pageSize = 6;
-  const [isLoadingMoreItems, setIsLoadingMoreItems] = useState(false);
-
-  function handleActivateBadge() {
-    setActivateBadge(true);
-    setBadgeText((prev) => prev + 1);
-  }
 
   function handleDeactivateBadge() {
     setActivateBadge(false);
@@ -52,7 +49,7 @@ export default function App() {
       const paginatedStories = pagination(
         fetchedStories,
         1,
-        pageSize,
+        storiesPageSize,
       ) as Story[];
       setRenderedStories(paginatedStories);
     } catch (error) {
@@ -62,27 +59,19 @@ export default function App() {
     }
   }
 
-  function handleStoriesInfiniteScroll() {
-    if (isLoadingMoreItems) return;
-    setIsLoadingMoreItems(true);
-    const contentToAppend = pagination(
-      stories,
-      storiesCurrentPage + 1,
-      pageSize,
-    ) as Story[];
-    if (contentToAppend.length > 0) {
-      setStoriesCurrentPage(storiesCurrentPage + 1);
-      setRenderedStories((prev) => [...prev, ...contentToAppend]);
-    }
-    setIsLoadingMoreItems(false);
-  }
-
   async function populatePosts() {
     try {
       const fetchedPosts = await fetchPosts();
+      if (!fetchedPosts) return;
       setPosts(fetchedPosts);
+      const paginatedPosts = pagination(
+        fetchedPosts,
+        1,
+        postsPageSize,
+      ) as Post[];
+      setRenderedPosts(paginatedPosts);
     } catch (error) {
-      console.log("error while fetching photos: ", error);
+      console.log("error while populating posts: ", error);
     } finally {
       setIsFetchingPosts(false);
     }
@@ -99,6 +88,55 @@ export default function App() {
       return [];
     }
     return database.slice(startIndex, endIndex);
+  }
+
+  function setPaginatedItems(
+    isLoadingMoreItems: boolean,
+    setIsLoadingMoreItems: (state: boolean) => void,
+    database: Story[] | Post[],
+    setRenderedItems: any,
+    currentPage: number,
+    setCurrentPage: (page: number) => void,
+    pageSize: number,
+  ) {
+    if (isLoadingMoreItems) return;
+    setIsLoadingMoreItems(true);
+    const contentToAppend = pagination(database, currentPage + 1, pageSize) as
+      | Story[]
+      | Post[];
+    if (contentToAppend.length > 0) {
+      setCurrentPage(currentPage + 1);
+      setRenderedItems((prev: Story[] | Post[]) => [
+        ...prev,
+        ...contentToAppend,
+      ]);
+    }
+    setIsLoadingMoreItems(false);
+  }
+
+  function handleInfiniteScroll(type: "stories" | "posts") {
+    switch (type) {
+      case "stories":
+        return setPaginatedItems(
+          isLoadingMoreStories,
+          setIsLoadingMoreStories,
+          stories,
+          setRenderedStories,
+          storiesCurrentPage,
+          setStoriesCurrentPage,
+          storiesPageSize,
+        );
+      case "posts":
+        return setPaginatedItems(
+          isLoadingMorePosts,
+          setIsLoadingMorePosts,
+          posts,
+          setRenderedPosts,
+          postsCurrentPage,
+          setPostsCurrentPage,
+          postsPageSize,
+        );
+    }
   }
 
   useEffect(() => {
@@ -124,12 +162,12 @@ export default function App() {
           ) : stories.length > 0 ? (
             <FlatList
               onEndReachedThreshold={0.5}
-              onEndReached={handleStoriesInfiniteScroll}
+              onEndReached={() => handleInfiniteScroll("stories")}
               horizontal={true}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.storiesFlatList}
               data={storiesRenderedData}
-              keyExtractor={(item) => item.id.toString()}
+              keyExtractor={(item) => "story_" + item.id.toString()}
               renderItem={(item) => (
                 <StoryItem
                   onPress={(name) => console.log("pressed: ", name)}
@@ -139,10 +177,25 @@ export default function App() {
               )}
             />
           ) : (
-            <NoStoryGotten />
+            <NoItemsMessage message="No stories available" />
           )}
         </View>
-        <View style={styles.postsContainer}></View>
+        <View style={styles.postsContainer}>
+          {isFetchingPosts ? (
+            <ActivityIndicator size={"large"} color={"#F35BAC"} />
+          ) : posts.length > 0 ? (
+            <FlatList
+              onEndReachedThreshold={0.5}
+              onEndReached={() => handleInfiniteScroll("posts")}
+              contentContainerStyle={styles.postsFlatList}
+              data={postsRenderedData}
+              keyExtractor={(item) => "post_" + item.id.toString()}
+              renderItem={(item) => <PostItem post={item.item} />}
+            />
+          ) : (
+            <NoItemsMessage message="No posts available" />
+          )}
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -162,11 +215,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   storiesContainer: {
-    marginTop: 20,
-    marginBottom: 30,
+    marginVertical: 20,
   },
   storiesFlatList: {
     gap: 20,
+  },
+  postsFlatList: {
+    gap: 30,
   },
   postsContainer: {
     flex: 1,

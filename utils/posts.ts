@@ -44,9 +44,9 @@ const unsplash = createApi({
   fetch: nodeFetch.default as unknown as typeof fetch,
 });
 
-async function fetchRandomPhotos() {
+async function fetchRandomPhotos(photosCount: number) {
   const response = await unsplash.photos.getRandom({
-    count: 30,
+    count: photosCount,
     orientation: "squarish",
   });
   const photos = response.response as Random[];
@@ -67,7 +67,7 @@ async function fetchUserById(userId: number) {
   return responseSingleUser.data;
 }
 
-function formatPost(user: User, photo: Random, post: ResponsePost) {
+function formatPost(user: User, photoUrl: string, post: ResponsePost) {
   return {
     id: post.id,
     user: {
@@ -76,7 +76,7 @@ function formatPost(user: User, photo: Random, post: ResponsePost) {
       country: user.address.country,
       image: user.image,
     },
-    postImage: photo.urls.regular,
+    postImage: photoUrl,
     likes: post.reactions.likes,
     comments: post.reactions.dislikes,
     saves: post.views,
@@ -84,14 +84,15 @@ function formatPost(user: User, photo: Random, post: ResponsePost) {
 }
 
 export async function fetchPosts() {
-  const photos = await fetchRandomPhotos();
+  const photosCount = 5;
+  const photos = await fetchRandomPhotos(photosCount);
   const responsePosts = await fetchPostsFromDummyApi();
   const posts: Post[] = [];
   for (let i = 0; i < 30; i++) {
     const post = responsePosts[i];
-    const photo = photos[i];
+    const photoUrl = photos[i % photosCount].urls.regular;
     const user: User = await fetchUserById(post.userId);
-    const formattedPost = formatPost(user, photo, post);
+    const formattedPost = formatPost(user, photoUrl, post);
     posts.push(formattedPost);
   }
   return posts;

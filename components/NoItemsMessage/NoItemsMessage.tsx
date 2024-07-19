@@ -2,10 +2,10 @@ import {Text, View} from "react-native";
 
 import {styles} from "./styles";
 
-export function NoStoryGotten() {
+export function NoItemsMessage({message}: {message: string}) {
   return (
     <View>
-      <Text style={styles.text}>No stories available</Text>
+      <Text style={styles.text}>{message}</Text>
     </View>
   );
 }
