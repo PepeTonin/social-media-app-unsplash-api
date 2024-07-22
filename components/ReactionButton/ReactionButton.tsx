@@ -1,8 +1,8 @@
 import {TouchableOpacity, View, Text} from "react-native";
 import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
-import {faHeart} from "@fortawesome/free-regular-svg-icons/faHeart";
 import {faCommentDots} from "@fortawesome/free-regular-svg-icons/faCommentDots";
 import {faBookmark} from "@fortawesome/free-regular-svg-icons/faBookmark";
+import {faHeart} from "@fortawesome/free-regular-svg-icons/faHeart";
 
 import {styles} from "./styles";
 

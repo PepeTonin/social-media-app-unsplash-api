@@ -1,4 +1,4 @@
-import {Image, Text, TouchableOpacity, View} from "react-native";
+import {Text, TouchableOpacity, View} from "react-native";
 
 import {UserImage} from "../UserImage/UserImage";
 

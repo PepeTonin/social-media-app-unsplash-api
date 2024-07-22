@@ -7,9 +7,6 @@ import {Random} from "unsplash-js/dist/methods/photos/types";
 
 type ResponsePost = {
   id: number;
-  title: string;
-  body: string;
-  tags: string[];
   reactions: {
     likes: number;
     dislikes: number;
@@ -53,9 +50,14 @@ async function fetchRandomPhotos(photosCount: number) {
   return photos;
 }
 
-async function fetchPostsFromDummyApi() {
+async function fetchFilteredPostsFromDummyApi(
+  limit: string,
+  skip: string,
+  select: string[],
+) {
+  const itemsToSelect = select.join(",");
   const responseFromDummyPosts = await axios.get<ResponseDataFromDummyPosts>(
-    "https://dummyjson.com/posts",
+    `https://dummyjson.com/posts?limit=${limit}&skip=${skip}&select=${itemsToSelect}`,
   );
   return responseFromDummyPosts.data.posts;
 }
@@ -83,14 +85,18 @@ function formatPost(user: User, photoUrl: string, post: ResponsePost) {
   };
 }
 
-export async function fetchPosts() {
-  const photosCount = 5;
-  const photos = await fetchRandomPhotos(photosCount);
-  const responsePosts = await fetchPostsFromDummyApi();
+export async function fetchFlteredPosts(limit: number, skip: number) {
+  const photos = await fetchRandomPhotos(limit);
+  const itemsToSelecFromDummyApi = ["id", "reactions", "views", "userId"];
+  const responsePosts = await fetchFilteredPostsFromDummyApi(
+    limit.toString(),
+    skip.toString(),
+    itemsToSelecFromDummyApi,
+  );
   const posts: Post[] = [];
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < limit; i++) {
     const post = responsePosts[i];
-    const photoUrl = photos[i % photosCount].urls.regular;
+    const photoUrl = photos[i].urls.regular;
     const user: User = await fetchUserById(post.userId);
     const formattedPost = formatPost(user, photoUrl, post);
     posts.push(formattedPost);

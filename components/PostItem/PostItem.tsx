@@ -4,11 +4,11 @@ import {faEllipsis} from "@fortawesome/free-solid-svg-icons/faEllipsis";
 
 import {Post} from "../../utils/posts";
 
+import {ReactionButton} from "../ReactionButton/ReactionButton";
 import {UserImage} from "../UserImage/UserImage";
 import {Button} from "../Button/Button";
 
 import {styles} from "./styles";
-import {ReactionButton} from "../ReactionButton/ReactionButton";
 
 type PostItemProps = {
   post: Post;
