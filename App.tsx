@@ -1,6 +1,7 @@
 import {useEffect, useState} from "react";
 import {FontAwesomeIcon} from "@fortawesome/react-native-fontawesome";
 import {faInbox} from "@fortawesome/free-solid-svg-icons/faInbox";
+import {NavigationContainer} from "@react-navigation/native";
 import {
   ActivityIndicator,
   FlatList,
@@ -105,72 +106,74 @@ export default function App() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.rootContainer}>
-      <View style={styles.headerContainer}>
-        <Title text="Let's Explore" />
-        <Button
-          onPress={handleDeactivateBadge}
-          hasBadge={activateBadge}
-          badgeText={badgeText.toString()}>
-          <FontAwesomeIcon icon={faInbox} size={32} color="#898DAE" />
-        </Button>
-      </View>
+    <NavigationContainer>
+      <SafeAreaView style={styles.rootContainer}>
+        <View style={styles.headerContainer}>
+          <Title text="Let's Explore" />
+          <Button
+            onPress={handleDeactivateBadge}
+            hasBadge={activateBadge}
+            badgeText={badgeText.toString()}>
+            <FontAwesomeIcon icon={faInbox} size={32} color="#898DAE" />
+          </Button>
+        </View>
 
-      <View>
-        {isFetchingStories ? (
-          <LoadingStories />
-        ) : stories.length > 0 ? (
-          <FlatList
-            onEndReachedThreshold={0.5}
-            onEndReached={handleStoriesInfiniteScroll}
-            horizontal={true}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.storiesFlatList}
-            data={storiesRenderedData}
-            keyExtractor={(item) =>
-              "story_" + item.id.toString() + Math.random().toString()
-            }
-            renderItem={(item) => (
-              <StoryItem
-                onPress={(name) => console.log("pressed: ", name)}
-                name={item.item.firstName}
-                image={item.item.image}
-              />
-            )}
-            ListFooterComponent={() => (
-              <ActivityIndicator size={"small"} color={"#F35BAC"} />
-            )}
-            ListFooterComponentStyle={styles.storiesFooterFlatList}
-          />
-        ) : (
-          <NoItemsMessage message="No stories available" />
-        )}
-      </View>
+        <View>
+          {isFetchingStories ? (
+            <LoadingStories />
+          ) : stories.length > 0 ? (
+            <FlatList
+              onEndReachedThreshold={0.5}
+              onEndReached={handleStoriesInfiniteScroll}
+              horizontal={true}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.storiesFlatList}
+              data={storiesRenderedData}
+              keyExtractor={(item) =>
+                "story_" + item.id.toString() + Math.random().toString()
+              }
+              renderItem={(item) => (
+                <StoryItem
+                  onPress={(name) => console.log("pressed: ", name)}
+                  name={item.item.firstName}
+                  image={item.item.image}
+                />
+              )}
+              ListFooterComponent={() => (
+                <ActivityIndicator size={"small"} color={"#F35BAC"} />
+              )}
+              ListFooterComponentStyle={styles.storiesFooterFlatList}
+            />
+          ) : (
+            <NoItemsMessage message="No stories available" />
+          )}
+        </View>
 
-      <View style={styles.postsContainer}>
-        {isFetchingPosts ? (
-          <LoadingTimeLine style={{marginBottom: 20}} />
-        ) : postsRenderedData.length > 0 ? (
-          <FlatList
-            showsVerticalScrollIndicator={false}
-            onEndReachedThreshold={0.5}
-            onEndReached={populatePosts}
-            contentContainerStyle={styles.postsFlatList}
-            data={postsRenderedData}
-            keyExtractor={(item) =>
-              "post_" + item.id.toString() + Math.random().toString()
-            }
-            renderItem={(item) => <PostItem post={item.item} />}
-            ListFooterComponent={() => (
-              <ActivityIndicator size={"large"} color={"#F35BAC"} />
-            )}
-            ListFooterComponentStyle={styles.postsFooterFlatList}
-          />
-        ) : (
-          <NoItemsMessage message="No posts available" />
-        )}
-      </View>
-    </SafeAreaView>
+        <View style={styles.postsContainer}>
+          {isFetchingPosts ? (
+            <LoadingTimeLine style={{marginBottom: 20}} />
+          ) : postsRenderedData.length > 0 ? (
+            <FlatList
+              showsVerticalScrollIndicator={false}
+              onEndReachedThreshold={0.5}
+              onEndReached={populatePosts}
+              contentContainerStyle={styles.postsFlatList}
+              data={postsRenderedData}
+              keyExtractor={(item) =>
+                "post_" + item.id.toString() + Math.random().toString()
+              }
+              renderItem={(item) => <PostItem post={item.item} />}
+              ListFooterComponent={() => (
+                <ActivityIndicator size={"large"} color={"#F35BAC"} />
+              )}
+              ListFooterComponentStyle={styles.postsFooterFlatList}
+            />
+          ) : (
+            <NoItemsMessage message="No posts available" />
+          )}
+        </View>
+      </SafeAreaView>
+    </NavigationContainer>
   );
 }
 
